@@ -1,0 +1,806 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Start Screen API",
+    "version": "1.0.0",
+    "description": "A Cloudflare Workers API for managing memories and flowers with geolocation features. No authentication required - public API.",
+    "contact": {
+      "name": "API Support",
+      "url": "https://planty-api.shakenokiri.me/"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8787",
+      "description": "Development server"
+    },
+    {
+      "url": "https://planty-api.shakenokiri.me/",
+      "description": "Production server"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "ISODate": {
+        "type": "string",
+        "format": "date-time",
+        "description": "ISO 8601 date-time string"
+      },
+      "Geohash": {
+        "type": "string",
+        "minLength": 5,
+        "description": "Geohash string with minimum 5 characters"
+      },
+      "Memory": {
+        "type": "object",
+        "required": ["id", "title", "description", "memoryDate", "createdAt", "updatedAt", "userId", "locationId", "lat", "lon"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the memory"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Memory title"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000,
+            "description": "Memory description"
+          },
+          "memoryDate": {
+            "$ref": "#/components/schemas/ISODate",
+            "description": "Date when the memory occurred"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/ISODate",
+            "description": "When the memory was created"
+          },
+          "updatedAt": {
+            "$ref": "#/components/schemas/ISODate",
+            "description": "When the memory was last updated"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User identifier (anonymous for public API)"
+          },
+          "locationId": {
+            "$ref": "#/components/schemas/Geohash",
+            "description": "Geohash location identifier"
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude coordinate"
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude coordinate"
+          },
+          "locationName": {
+            "type": "string",
+            "description": "Human-readable location name"
+          }
+        }
+      },
+      "CreateMemoryInput": {
+        "type": "object",
+        "required": ["title", "description", "lat", "lon"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Memory title"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000,
+            "description": "Memory description"
+          },
+          "memoryDate": {
+            "$ref": "#/components/schemas/ISODate",
+            "description": "Date when the memory occurred (defaults to current time)"
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude coordinate"
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude coordinate"
+          },
+          "locationName": {
+            "type": "string",
+            "description": "Human-readable location name"
+          }
+        }
+      },
+      "CreateMemoryWithLocationInput": {
+        "type": "object",
+        "required": ["title", "description", "lat", "lon", "locationId"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Memory title"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000,
+            "description": "Memory description"
+          },
+          "memoryDate": {
+            "$ref": "#/components/schemas/ISODate",
+            "description": "Date when the memory occurred (defaults to current time)"
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude coordinate"
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude coordinate"
+          },
+          "locationName": {
+            "type": "string",
+            "description": "Human-readable location name"
+          },
+          "locationId": {
+            "$ref": "#/components/schemas/Geohash",
+            "description": "Geohash location identifier"
+          }
+        }
+      },
+      "UpdateMemoryInput": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Updated memory title"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 5000,
+            "description": "Updated memory description"
+          },
+          "memoryDate": {
+            "$ref": "#/components/schemas/ISODate",
+            "description": "Updated memory date"
+          }
+        }
+      },
+      "Flower": {
+        "type": "object",
+        "required": ["id", "lat", "lon", "texture", "name", "createdAt", "ownerId", "type"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the flower"
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude coordinate"
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude coordinate"
+          },
+          "texture": {
+            "type": "string",
+            "enum": ["flower1", "flower2", "withered"],
+            "description": "Flower texture type"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Flower name"
+          },
+          "createdAt": {
+            "$ref": "#/components/schemas/ISODate",
+            "description": "When the flower was created"
+          },
+          "witherAt": {
+            "$ref": "#/components/schemas/ISODate",
+            "description": "When the flower will wither (optional)"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "Owner identifier (anonymous for public API)"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["mine", "others"],
+            "description": "Flower ownership type"
+          }
+        }
+      },
+      "CreateFlowerInput": {
+        "type": "object",
+        "required": ["lat", "lon", "texture", "name"],
+        "properties": {
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90,
+            "description": "Latitude coordinate"
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180,
+            "description": "Longitude coordinate"
+          },
+          "texture": {
+            "type": "string",
+            "enum": ["flower1", "flower2"],
+            "description": "Flower texture type"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "description": "Flower name"
+          }
+        }
+      },
+      "PaginatedMemory": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Memory"
+            },
+            "description": "Array of memories"
+          },
+          "nextCursor": {
+            "type": "string",
+            "description": "Cursor for pagination (ISO date string)"
+          }
+        }
+      },
+      "PaginatedFlower": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Flower"
+            },
+            "description": "Array of flowers"
+          },
+          "nextCursor": {
+            "type": "string",
+            "description": "Cursor for pagination (ISO date string)"
+          }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Error code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Additional error details"
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Start Screen API"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "status": {
+            "type": "string",
+            "example": "healthy"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "Cursor": {
+        "name": "cursor",
+        "in": "query",
+        "description": "Cursor for pagination (ISO date string)",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "Limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "Number of items to return (1-200)",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "default": 50
+        }
+      },
+      "BBox": {
+        "name": "bbox",
+        "in": "query",
+        "description": "Bounding box filter (west,south,east,north)",
+        "schema": {
+          "type": "string",
+          "pattern": "^-?\\d+(\\.\\d+)?,-?\\d+(\\.\\d+)?,-?\\d+(\\.\\d+)?,-?\\d+(\\.\\d+)?$"
+        }
+      },
+      "Owner": {
+        "name": "owner",
+        "in": "query",
+        "description": "Filter by ownership",
+        "schema": {
+          "type": "string",
+          "enum": ["me", "all"],
+          "default": "all"
+        }
+      },
+      "Type": {
+        "name": "type",
+        "in": "query",
+        "description": "Filter by flower type",
+        "schema": {
+          "type": "string",
+          "enum": ["mine", "others", "withered"]
+        }
+      }
+    }
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Health check",
+        "description": "Check API health status",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "API is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/locations/{locationId}/memories": {
+      "get": {
+        "summary": "List memories by location",
+        "description": "Get paginated list of memories for a specific location",
+        "tags": ["Memories"],
+        "parameters": [
+          {
+            "name": "locationId",
+            "in": "path",
+            "required": true,
+            "description": "Geohash location identifier",
+            "schema": {
+              "$ref": "#/components/schemas/Geohash"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of memories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedMemory"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid geohash",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a memory at location",
+        "description": "Create a new memory for a specific location",
+        "tags": ["Memories"],
+        "parameters": [
+          {
+            "name": "locationId",
+            "in": "path",
+            "required": true,
+            "description": "Geohash location identifier",
+            "schema": {
+              "$ref": "#/components/schemas/Geohash"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemoryInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Memory created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Memory"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memories": {
+      "post": {
+        "summary": "Create memory",
+        "description": "Create a new memory with locationId in request body",
+        "tags": ["Memories"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMemoryWithLocationInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Memory created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Memory"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/memories/{id}": {
+      "patch": {
+        "summary": "Update memory",
+        "description": "Update an existing memory",
+        "tags": ["Memories"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Memory identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMemoryInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Memory updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Memory"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Memory not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete memory",
+        "description": "Delete an existing memory",
+        "tags": ["Memories"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Memory identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Memory deleted successfully"
+          },
+          "404": {
+            "description": "Memory not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/flowers": {
+      "get": {
+        "summary": "List flowers",
+        "description": "Get paginated list of flowers with optional filtering",
+        "tags": ["Flowers"],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BBox"
+          },
+          {
+            "$ref": "#/components/parameters/Limit"
+          },
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "$ref": "#/components/parameters/Owner"
+          },
+          {
+            "$ref": "#/components/parameters/Type"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of flowers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedFlower"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create flower",
+        "description": "Create a new flower",
+        "tags": ["Flowers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFlowerInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Flower created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Flower"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/flowers/{id}": {
+      "get": {
+        "summary": "Get flower",
+        "description": "Get a specific flower by ID",
+        "tags": ["Flowers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Flower identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Flower details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Flower"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Flower not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete flower",
+        "description": "Delete an existing flower",
+        "tags": ["Flowers"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Flower identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Flower deleted successfully"
+          },
+          "404": {
+            "description": "Flower not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "API health and status endpoints"
+    },
+    {
+      "name": "Memories",
+      "description": "Memory management endpoints"
+    },
+    {
+      "name": "Flowers",
+      "description": "Flower management endpoints"
+    }
+  ]
+}

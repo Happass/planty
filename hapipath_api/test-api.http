@@ -1,0 +1,145 @@
+### Start Screen API Tests
+### Based on OpenAPI 3.1.0 specification
+
+@baseUrl = http://localhost:8787
+@locationId = 9q8yy
+@memoryId = 
+@flowerId = 
+
+### 1. Health Check
+GET {{baseUrl}}/
+Content-Type: application/json
+
+### 2. Create Memory at Location
+POST {{baseUrl}}/locations/{{locationId}}/memories
+Content-Type: application/json
+
+{
+  "title": "Beautiful Sunset",
+  "description": "Watched an amazing sunset from this location. The colors were incredible!",
+  "memoryDate": "2024-01-15T18:30:00.000Z",
+  "lat": 35.6762,
+  "lon": 139.6503,
+  "locationName": "Tokyo Station"
+}
+
+### 3. Create Another Memory
+POST {{baseUrl}}/locations/{{locationId}}/memories
+Content-Type: application/json
+
+{
+  "title": "Morning Coffee",
+  "description": "Had the best coffee here this morning. The atmosphere was perfect for reading.",
+  "lat": 35.6762,
+  "lon": 139.6503,
+  "locationName": "Tokyo Station"
+}
+
+### 4. List Memories by Location
+GET {{baseUrl}}/locations/{{locationId}}/memories?limit=10
+Content-Type: application/json
+
+### 5. List Memories with Pagination
+GET {{baseUrl}}/locations/{{locationId}}/memories?limit=1&cursor=2024-01-15T18:30:00.000Z
+Content-Type: application/json
+
+### 6. Update Memory (replace {{memoryId}} with actual ID from step 2)
+PATCH {{baseUrl}}/memories/{{memoryId}}
+Content-Type: application/json
+
+{
+  "title": "Updated Beautiful Sunset",
+  "description": "Updated description with more details about the amazing sunset experience."
+}
+
+### 7. Get Single Memory
+GET {{baseUrl}}/memories/{{memoryId}}
+Content-Type: application/json
+
+### 8. Create Flower
+POST {{baseUrl}}/flowers
+Content-Type: application/json
+
+{
+  "lat": 35.6762,
+  "lon": 139.6503,
+  "texture": "flower1",
+  "name": "Cherry Blossom"
+}
+
+### 9. Create Another Flower
+POST {{baseUrl}}/flowers
+Content-Type: application/json
+
+{
+  "lat": 35.6762,
+  "lon": 139.6503,
+  "texture": "flower2",
+  "name": "Rose"
+}
+
+### 10. List All Flowers
+GET {{baseUrl}}/flowers?limit=10
+Content-Type: application/json
+
+### 11. List Flowers with BBox Filter
+GET {{baseUrl}}/flowers?bbox=139.6,35.6,139.7,35.7&limit=10
+Content-Type: application/json
+
+### 12. List Flowers by Owner (me)
+GET {{baseUrl}}/flowers?owner=me&limit=10
+Content-Type: application/json
+
+### 13. List Flowers by Type
+GET {{baseUrl}}/flowers?type=mine&limit=10
+Content-Type: application/json
+
+### 14. Get Single Flower (replace {{flowerId}} with actual ID from step 8)
+GET {{baseUrl}}/flowers/{{flowerId}}
+Content-Type: application/json
+
+### 15. Delete Flower
+DELETE {{baseUrl}}/flowers/{{flowerId}}
+Content-Type: application/json
+
+### 16. Delete Memory
+DELETE {{baseUrl}}/memories/{{memoryId}}
+Content-Type: application/json
+
+### 17. Test Invalid Geohash (should return 400)
+GET {{baseUrl}}/locations/abc/memories
+Content-Type: application/json
+
+### 18. Test Invalid BBox (should return 400)
+GET {{baseUrl}}/flowers?bbox=invalid
+Content-Type: application/json
+
+### 19. Test Memory Validation (should return 400)
+POST {{baseUrl}}/locations/{{locationId}}/memories
+Content-Type: application/json
+
+{
+  "title": "",
+  "description": "This should fail validation",
+  "lat": 200,
+  "lon": 200
+}
+
+### 20. Test Flower Validation (should return 400)
+POST {{baseUrl}}/flowers
+Content-Type: application/json
+
+{
+  "lat": 200,
+  "lon": 200,
+  "texture": "invalid",
+  "name": ""
+}
+
+### 21. Test Non-existent Memory (should return 404)
+GET {{baseUrl}}/memories/non-existent-id
+Content-Type: application/json
+
+### 22. Test Non-existent Flower (should return 404)
+GET {{baseUrl}}/flowers/non-existent-id
+Content-Type: application/json

@@ -1,0 +1,19 @@
+{
+  "name": "hapipath_api",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "test": "node test-suite.js",
+    "test:prod": "BASE_URL=https://planty-api.shakenokiri.me/ node test-suite.js",
+    "test:connection": "node test-connection.js",
+    "test:http": "echo 'Use test-api.http file with your HTTP client'"
+  },
+  "dependencies": {
+    "hono": "^4.9.7"
+  },
+  "devDependencies": {
+    "wrangler": "^4.4.0"
+  }
+}
