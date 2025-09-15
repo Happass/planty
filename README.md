@@ -42,7 +42,6 @@
   - [Directory Structure](#directory-structure-2)
   - [Setup \& Development](#setup--development)
   - [Production URL](#production-url-2)
-- [ハッカソン中の開発](#ハッカソン中の開発)
 
 # Plantly 植えた花の思い出共有と移動サービス
 
@@ -324,7 +323,3 @@ smartphone_screen/
 
   本番環境: https://planty-api.shakenokiri.me/
 
-
-# ハッカソン中の開発
-
-ハッカソン中の開発はAIアシスタントを活用し、アイディアを実現するためのコード生成、バグ修正、最適化を行いました。使用したツールには、cursor、gemini code cli、github copilot, codex, cluade code cli　を使用しました。これらのツールには
